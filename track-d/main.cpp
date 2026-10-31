@@ -1,12 +1,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-long long shortestPath(const pair<int, int>& query,const vector<vector<pair<int, uint32_t>>>& adj, vector<long long>& bestDist){
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges, vector<long long>& bestDist){
     int source=query.first;
     int target=query.second;
 
     if (source==target) return 0;
-    int n=adj.size();
+
     priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
 
     pq.emplace(0, source);
@@ -23,13 +23,17 @@ long long shortestPath(const pair<int, int>& query,const vector<vector<pair<int,
 
         if (u==target) return currWt;
 
-        for (const auto &[v, wt]: adj[u]){
+        for (int j=offset[u];j<offset[u+1];j++){
+            int neigh=edges[j].first;
+            uint32_t wt=edges[j].second;
+            
             long long nextWt=currWt+wt;
-            if (nextWt>=bestDist[v]) continue;
+            
+            if (nextWt>=bestDist[neigh]) continue;
 
-            bestDist[v]=nextWt;
+            bestDist[neigh]=nextWt;
 
-            pq.emplace(bestDist[v], v);
+            pq.emplace(bestDist[neigh], neigh);
         }
     }
 
@@ -59,8 +63,8 @@ int main() {
     graph>>n>>m;
     graph.ignore();
 
-    vector<vector<pair<int, uint32_t>>>adj(n);
     vector<int>inDegree(n,0);
+    vector<int>outDegree(n,0);
 
     for (int i=0;i<m;i++){
         int u;
@@ -68,8 +72,29 @@ int main() {
         uint32_t w;
 
         graph>>u>>v>>w;
-        adj[u].push_back({v,w});
+        outDegree[u]++;
         inDegree[v]++;
+    }
+
+    vector<int>offset(n+1,0);
+    for (int i=1;i<=n;i++) offset[i]=offset[i-1]+outDegree[i-1];
+
+    vector<pair<int, uint32_t>>edges(m);
+
+    vector<int>cursor=offset;
+
+    graph.clear();
+    graph.seekg(0);
+
+    graph>>n>>m;
+
+    for (int i=0;i<m;i++){
+        int u, v;
+        uint32_t w;
+        graph>>u>>v>>w;
+
+        edges[cursor[u]]={v,w};
+        cursor[u]++;
     }
 
     //queries
@@ -96,12 +121,12 @@ int main() {
             distances[i]=0;
             continue;
         }
-        if (inDegree[graphQueries[i].second]==0 || adj[graphQueries[i].first].size()==0) {
+        if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==0){
             distances[i]=-1;
             continue;
         }
         bestDist.assign(n, LLONG_MAX);
-        distances[i]=shortestPath(graphQueries[i], adj, bestDist);
+        distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist);
     }
     
     // 3. Write output
