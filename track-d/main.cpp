@@ -1,11 +1,12 @@
 #include <bits/stdc++.h>
 using namespace std;
-long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges, vector<long long>& bestDist){
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges, vector<long long>& bestDist, vector<int>& seenBy, const int& queryId){
     int source=query.first;
     int target=query.second;
+    seenBy[source]=queryId;
+    bestDist[source]=0;
     priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
     pq.emplace(0, source);
-    bestDist[source]=0;
     while(!pq.empty()){
         auto state=pq.top();
         pq.pop();
@@ -17,6 +18,10 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
             int neigh=edges[j].first;
             uint32_t wt=edges[j].second;     
             long long nextWt=currWt+wt;
+            if (seenBy[neigh]!=queryId){
+                seenBy[neigh]=queryId;
+                bestDist[neigh]=LLONG_MAX;
+            }
             if (nextWt>=bestDist[neigh]) continue;
             bestDist[neigh]=nextWt;
             pq.emplace(bestDist[neigh], neigh);
@@ -55,7 +60,7 @@ int main() {
     graph.seekg(0);
     graph>>n>>m;
     for (int i=0;i<m;i++){
-        int u, v; uint32_t w;
+        int u, v;uint32_t w;
         graph>>u>>v>>w;
         edges[cursor[u]]={v,w};
         cursor[u]++;
@@ -68,7 +73,8 @@ int main() {
     }
     int q=graphQueries.size();
     vector<long long>distances(q);
-    vector<long long>bestDist(n,LLONG_MAX);    
+    vector<long long>bestDist(n,LLONG_MAX);   
+    vector<int> seenBy(n, -1); 
     for (int i=0;i<q;i++){
         if (graphQueries[i].first==graphQueries[i].second){
             distances[i]=0;
@@ -78,8 +84,7 @@ int main() {
             distances[i]=-1;
             continue;
         }
-        bestDist.assign(n, LLONG_MAX);
-        distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist);
+        distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist, seenBy, i);
     }
     // 3. Write output
     for (int i=0;i<q;i++) output<<distances[i]<<"\n";
