@@ -1,11 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
+priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
 long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges, vector<long long>& bestDist, vector<int>& seenBy, const int& queryId){
     int source=query.first;
     int target=query.second;
     seenBy[source]=queryId;
     bestDist[source]=0;
-    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
     pq.emplace(0, source);
     while(!pq.empty()){
         auto state=pq.top();
@@ -84,6 +84,7 @@ int main() {
             distances[i]=-1;
             continue;
         }
+        pq=priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>();
         distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist, seenBy, i);
     }
     // 3. Write output
