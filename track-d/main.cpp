@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 #include <thread>
 using namespace std;
-long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges,vector<long long>& bestDist, vector<int>& seenBy, const int& queryId){
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId){
     int source=query.first;
     int target=query.second;
     seenBy[source]=queryId;
@@ -77,7 +77,7 @@ int main() {
     atomic<int> nextQuery{0};
     auto worker=[&](){
         vector<long long>bestDist(n,LLONG_MAX);   
-        vector<int> seenBy(n, -1); 
+        vector<uint16_t> seenBy(n, -1); 
         while(true){
             int i=nextQuery.fetch_add(1, memory_order_relaxed);
             if (i>=q) break;
@@ -94,8 +94,8 @@ int main() {
         }
     };
     vector<thread> workers;
-    int threadCount=8;
-    
+    int threadCount=6;
+
     for (int i=0;i<threadCount;i++){
         workers.emplace_back(worker);
     }
