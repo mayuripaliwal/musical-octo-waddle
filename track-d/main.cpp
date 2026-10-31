@@ -85,16 +85,15 @@ int main() {
 
     for (int i=0;i<n;i++){
         int neighborsCount=initialAdj[i].size();
-        for (int j=0;j<neighborsCount;j++){
+        int j=0;
+        while (j<neighborsCount){
             int startIdx=j;
             adj[i].push_back(initialAdj[i][startIdx]);
             //skip duplicate edges and edges with higher weights
             while (j<neighborsCount && (initialAdj[i][j]==initialAdj[i][startIdx] ||(initialAdj[i][j].first==initialAdj[i][startIdx].first))){
                 j++;
-                continue;
             }
-
-            if (j<neighborsCount && j!=startIdx) adj[i].push_back(initialAdj[i][j]);
+            if (j==startIdx) j++;
         }
     }
 
