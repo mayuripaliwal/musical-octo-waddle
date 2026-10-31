@@ -44,13 +44,13 @@ int main() {
     int m;
     graph>>n>>m;
     graph.ignore();
-    vector<int>inDegree(n,0);
+    vector<bool>inDegree(n,false);
     vector<int>outDegree(n,0);
     for (int i=0;i<m;i++){
         int u; int v; uint32_t w;
         graph>>u>>v>>w;
         outDegree[u]++;
-        inDegree[v]++;
+        if (!inDegree[v]) inDegree[v]=true;
     }
     vector<int>offset(n+1,0);
     for (int i=1;i<=n;i++) offset[i]=offset[i-1]+outDegree[i-1];
@@ -65,11 +65,11 @@ int main() {
         edges[cursor[u]]={v,w};
         cursor[u]++;
     }
-    vector<pair<int, int>>graphQueries;
-    graphQueries.reserve(2000);
-    int u; int v;
+    vector<pair<int, int>>graphQueries(2000);
+    int u; int v; int cnt=0;
     while (queries>>u>>v){
-        graphQueries.push_back({u, v});
+        graphQueries[cnt]={u, v};
+        cnt++;
     }
     int q=graphQueries.size();
     vector<long long>distances(q);
@@ -80,7 +80,7 @@ int main() {
             distances[i]=0;
             continue;
         }
-        if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==0){
+        if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==false){
             distances[i]=-1;
             continue;
         }
