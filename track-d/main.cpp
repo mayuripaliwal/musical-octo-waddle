@@ -1,11 +1,12 @@
 #include <bits/stdc++.h>
+#include <thread>
 using namespace std;
-priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
-long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges, vector<long long>& bestDist, vector<int>& seenBy, const int& queryId){
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges,vector<long long>& bestDist, vector<int>& seenBy, const int& queryId){
     int source=query.first;
     int target=query.second;
     seenBy[source]=queryId;
     bestDist[source]=0;
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
     pq.emplace(0, source);
     while(!pq.empty()){
         auto state=pq.top();
@@ -73,19 +74,32 @@ int main() {
     }
     int q=graphQueries.size();
     vector<long long>distances(q);
-    vector<long long>bestDist(n,LLONG_MAX);   
-    vector<int> seenBy(n, -1); 
-    for (int i=0;i<q;i++){
-        if (graphQueries[i].first==graphQueries[i].second){
-            distances[i]=0;
-            continue;
+    atomic<int> nextQuery{0};
+    auto worker=[&](){
+        vector<long long>bestDist(n,LLONG_MAX);   
+        vector<int> seenBy(n, -1); 
+        while(true){
+            int i=nextQuery.fetch_add(1, memory_order_relaxed);
+            if (i>=q) break;
+            if (graphQueries[i].first==graphQueries[i].second){
+                distances[i]=0;
+                continue;
+            }
+            if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==false){
+                distances[i]=-1;
+                continue;
+            }
+            
+            distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist, seenBy, i);
         }
-        if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==false){
-            distances[i]=-1;
-            continue;
-        }
-        pq=priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>();
-        distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist, seenBy, i);
+    };
+    vector<thread> workers;
+    int threadCount=2;
+    for (int i=0;i<threadCount;i++){
+        workers.emplace_back(worker);
+    }
+    for (auto& t: workers){
+        t.join();
     }
     // 3. Write output
     for (int i=0;i<q;i++) output<<distances[i]<<"\n";
