@@ -94,7 +94,7 @@ int main() {
         }
     };
     vector<thread> workers;
-    int threadCount=4;
+    int threadCount=6;
     for (int i=0;i<threadCount;i++){
         workers.emplace_back(worker);
     }
