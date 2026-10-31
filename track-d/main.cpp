@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-long long shortestPath(const pair<int, int>& query,const vector<vector<pair<int, long long>>>& adj, vector<long long>& bestDist){
+long long shortestPath(const pair<int, int>& query,const vector<vector<pair<int, uint32_t>>>& adj, vector<long long>& bestDist){
     int source=query.first;
     int target=query.second;
 
@@ -59,13 +59,13 @@ int main() {
     graph>>n>>m;
     graph.ignore();
 
-    vector<vector<pair<int, long long>>>adj(n);
+    vector<vector<pair<int, uint32_t>>>adj(n);
     vector<int>inDegree(n,0);
 
     for (int i=0;i<m;i++){
         int u;
         int v;
-        long long w;
+        uint32_t w;
 
         graph>>u>>v>>w;
         adj[u].push_back({v,w});
