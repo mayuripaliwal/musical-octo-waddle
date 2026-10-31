@@ -59,7 +59,7 @@ int main() {
     graph>>n>>m;
     graph.ignore();
 
-    vector<vector<pair<int, uint32_t>>>adj(n);
+    vector<vector<pair<int, uint32_t>>>initialAdj(n);
     vector<int>inDegree(n,0);
 
     for (int i=0;i<m;i++){
@@ -68,8 +68,34 @@ int main() {
         uint32_t w;
 
         graph>>u>>v>>w;
-        adj[u].push_back({v,w});
+
+        //prevent self loops from entering the adjaceny list
+        if (u==v) continue;
+
+        initialAdj[u].push_back({v,w});
         inDegree[v]++;
+    }
+
+    for (int i=0;i<n;i++){
+        if (initialAdj[i].empty()) continue;
+        sort(initialAdj[i].begin(), initialAdj[i].end());
+    }
+
+    vector<vector<pair<int, uint32_t>>>adj(n);
+
+    for (int i=0;i<n;i++){
+        int neighborsCount=initialAdj[i].size();
+        for (int j=0;j<neighborsCount;j++){
+            int startIdx=j;
+            adj[i].push_back(initialAdj[i][startIdx]);
+            //skip duplicate edges and edges with higher weights
+            while (j<neighborsCount && (initialAdj[i][j]==initialAdj[i][startIdx] ||(initialAdj[i][j].first==initialAdj[i][startIdx].first))){
+                j++;
+                continue;
+            }
+
+            if (j<neighborsCount && j!=startIdx) adj[i].push_back(initialAdj[i][j]);
+        }
     }
 
     //queries
