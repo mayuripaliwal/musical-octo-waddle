@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 #include <thread>
 using namespace std;
-long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<pair<int, uint32_t>>& edges,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId){
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<int>& edgesNeigh, const vector<uint32_t>& edgesWt,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId){
     int source=query.first;
     int target=query.second;
     seenBy[source]=queryId;
@@ -16,8 +16,8 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
         if (currWt>bestDist[u]) continue;
         if (u==target) return currWt;
         for (int j=offset[u];j<offset[u+1];j++){
-            int neigh=edges[j].first;
-            uint32_t wt=edges[j].second;     
+            int neigh=edgesNeigh[j];
+            uint32_t wt=edgesWt[j];     
             long long nextWt=currWt+wt;
             if (seenBy[neigh]!=queryId){
                 seenBy[neigh]=queryId;
@@ -55,7 +55,8 @@ int main() {
     }
     vector<int>offset(n+1,0);
     for (int i=1;i<=n;i++) offset[i]=offset[i-1]+outDegree[i-1];
-    vector<pair<int, uint32_t>>edges(m);
+    vector<int>edgesNeigh(m);
+    vector<uint32_t>edgesWt(m);
     vector<int>cursor=offset;
     graph.clear();
     graph.seekg(0);
@@ -63,7 +64,8 @@ int main() {
     for (int i=0;i<m;i++){
         int u, v;uint32_t w;
         graph>>u>>v>>w;
-        edges[cursor[u]]={v,w};
+        edgesNeigh[cursor[u]]=v;
+        edgesWt[cursor[u]]=w;
         cursor[u]++;
     }
     vector<pair<int, int>>graphQueries(2000);
@@ -72,6 +74,7 @@ int main() {
         graphQueries[cnt]={u, v};
         cnt++;
     }
+    queries.close();
     int q=graphQueries.size();
     vector<long long>distances(q);
     atomic<int> nextQuery{0};
@@ -90,19 +93,20 @@ int main() {
                 continue;
             }
             
-            distances[i]=shortestPath(graphQueries[i], offset, edges, bestDist, seenBy, i);
+            distances[i]=shortestPath(graphQueries[i], offset, edgesNeigh, edgesWt, bestDist, seenBy, i);
         }
     };
     vector<thread> workers;
     int threadCount=12;
+    workers.reserve(threadCount);
 
-    for (int i=0;i<threadCount;i++){
+    for (int i=0;i<threadCount;++i){
         workers.emplace_back(worker);
     }
     for (auto& t: workers){
         t.join();
     }
     // 3. Write output
-    for (int i=0;i<q;i++) output<<distances[i]<<"\n";
+    for (int i=0;i<q;++i) output<<distances[i]<<"\n";
     return 0;
 }
