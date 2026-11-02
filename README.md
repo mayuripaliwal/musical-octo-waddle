@@ -1,6 +1,6 @@
-# Speed Demon 2026 — Track D: Traverse
+# My C++ implementation of the Traverse challenge from Speed Demon 2026
 
-My C++ implementation of the **Traverse** challenge from Speed Demon 2026, focused on efficient shortest-path computation across multiple source-target queries.
+Efficiently computes shortest paths across large directed weighted graphs for multiple source-target queries. Designed to reduce execution time and memory consumption, this implementation brings the reference runtime down from 72.69 seconds to 2.24 seconds while preserving the expected output for every query.
 
 ## Overview
 
