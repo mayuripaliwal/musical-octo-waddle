@@ -98,6 +98,10 @@ However, I benchmarked different thread counts: **2, 4, 6, 8, 10, and 12**.
 
 The results showed that four threads provided the best time-memory trade-off for my implementation. Adding more threads did not necessarily improve the overall result.
 
+The architecture below illustrates how I implemented concurrent query execution using worker threads and an atomic query counter.
+
+![image-query-execution](images\parallel-query-execution.png)
+
 > This was an important lesson: more concurrency does not automatically translate into better performance.
 
 ### 5. Experimenting with compiler flags
