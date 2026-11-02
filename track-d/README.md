@@ -119,6 +119,7 @@ Instead of relying on formatted extraction for every integer, the custom parser 
 I also benchmarked different buffer sizes, including \(2^8\), \(2^{16}\), and \(2^{20}\) bytes. For my implementation, a buffer size of \(2^{20}\) bytes (1 MiB) performed best.
 
 Before buffered reading [0fab7ea](https://github.com/mayuripaliwal/musical-octo-waddle/commit/0fab7ea38fc72b9c056e1dac2a0c3279dbfcd905): 3.566 seconds
+
 After buffered reading [0dd7ba6](https://github.com/mayuripaliwal/musical-octo-waddle/commit/0dd7ba6db2eeb71dc453f8e346d1bbedd7e11cf5): 2.240 seconds
 Overall reduction: 1.326 seconds (~37.2%)
 
