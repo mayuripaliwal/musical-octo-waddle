@@ -3,17 +3,22 @@
 using namespace std;
 class FastInput{
 private:
-    static constexpr size_t BUFFER_SIZE = 1<<20;
+    static constexpr size_t BUFFER_SIZE = 1<<21;
+
     FILE* file;
     char buffer[BUFFER_SIZE];
+
     size_t pos=0;
     size_t len=0;
+
     int readChar(){
         if(pos==len){
             len=fread(buffer, 1, BUFFER_SIZE, file);
             pos=0;
+
             if (len==0) return EOF;
         }
+
         return static_cast<unsigned char> (buffer[pos++]);
     }
 public:
@@ -23,9 +28,11 @@ public:
             throw runtime_error("Failed to open input file!");
         }
     }
+
     ~FastInput(){
         if (file) fclose(file);
     }
+
     bool readUInt(uint32_t& x){
         int c;
         do{
@@ -33,11 +40,13 @@ public:
             if (c==EOF) return false;
         }
         while(c<=' ');
+
         x=0;
         while(c>='0' && c<='9'){
             x=x*10+(c-'0');
             c=readChar();
         }
+
         return true;
     }
 };
@@ -71,23 +80,11 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
     return -1;
 }
 int main() {
+    auto overallStart=chrono::steady_clock::now();
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
-    vector<pair<int, int>>graphQueries(2000);
-    auto queryReaderDuration=0.0;
-    thread queryReader([&](){
-        FastInput queries("/data/queries.txt");
-        int u; int v; int cnt=0;
-        uint32_t uraw, vraw;
-        while (queries.readUInt(uraw)){
-            if (!queries.readUInt(vraw)) return;
-            int u=static_cast<int>(uraw);
-            int v=static_cast<int>(vraw);
-            graphQueries[cnt]={u, v};
-            cnt++;
-        }
-    });
     FastInput graph("/data/graph.txt");
+    FastInput queries("/data/queries.txt");
     ofstream output("/out/distances.txt");
     uint32_t nraw; uint32_t mraw;
     if (!graph.readUInt(nraw) || !graph.readUInt(mraw)){
@@ -125,7 +122,16 @@ int main() {
     }
     vector<tuple<int, int, uint32_t>>().swap(edges);
     vector<int>().swap(cursor);
-    queryReader.join();
+    vector<pair<int, int>>graphQueries(2000);
+    int u; int v; int cnt=0;
+    uint32_t uraw, vraw;
+    while (queries.readUInt(uraw)){
+        if (!queries.readUInt(vraw)) return -1;
+        int u=static_cast<int>(uraw);
+        int v=static_cast<int>(vraw);
+        graphQueries[cnt]={u, v};
+        cnt++;
+    }
     int q=graphQueries.size();
     vector<long long>distances(q);
     atomic<int> nextQuery{0};
