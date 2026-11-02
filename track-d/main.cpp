@@ -82,6 +82,7 @@ int main() {
     }
     int n=static_cast<int>(nraw);
     int m=static_cast<int>(mraw);
+    vector<bool>inDegree(n,false);
     vector<int>outDegree(n,0);
     vector<tuple<int, int, uint32_t>>edges;
     edges.reserve(m);
@@ -94,6 +95,7 @@ int main() {
         int v=static_cast<int>(vraw);
         if (u==v) continue;
         outDegree[u]++;
+        if (!inDegree[v]) inDegree[v]=true;
         edges.emplace_back(u,v,w);
     }
     m=edges.size();
@@ -133,7 +135,7 @@ int main() {
                 distances[i]=0;
                 continue;
             }
-            if (outDegree[graphQueries[i].first]==0){
+            if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==false){
                 distances[i]=-1;
                 continue;
             }
