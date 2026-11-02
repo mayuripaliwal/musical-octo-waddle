@@ -4,35 +4,24 @@ using namespace std;
 class FastInput{
 private:
     static constexpr size_t BUFFER_SIZE = 1<<20;
-
     FILE* file;
     char buffer[BUFFER_SIZE];
-
-    size_t pos=0;
-    size_t len=0;
-
+    size_t pos=0; size_t len=0;
     int readChar(){
         if(pos==len){
             len=fread(buffer, 1, BUFFER_SIZE, file);
             pos=0;
-
             if (len==0) return EOF;
         }
-
         return static_cast<unsigned char> (buffer[pos++]);
     }
 public:
     FastInput(const char* filename){
         file=fopen(filename, "rb");
-        if (!file){
-            throw runtime_error("Failed to open input file!");
-        }
     }
-
     ~FastInput(){
         if (file) fclose(file);
     }
-
     bool readUInt(uint32_t& x){
         int c;
         do{
@@ -40,13 +29,11 @@ public:
             if (c==EOF) return false;
         }
         while(c<=' ');
-
         x=0;
         while(c>='0' && c<='9'){
             x=x*10+(c-'0');
             c=readChar();
         }
-
         return true;
     }
 };
@@ -91,10 +78,7 @@ int main() {
     }
     int n=static_cast<int>(nraw);
     int m=static_cast<int>(mraw);
-    vector<bool>inDegree(n,false);
-    vector<int>outDegree(n,0);
-    vector<tuple<int, int, uint32_t>>edges;
-    edges.reserve(m);
+    map<pair<int, int>, int>minEdgeWt;
     for (int i=0;i<m;++i){
         uint32_t uraw; uint32_t vraw; uint32_t w;
         if (!graph.readUInt(uraw) || !graph.readUInt(vraw) || !graph.readUInt(w)){
@@ -103,9 +87,22 @@ int main() {
         int u=static_cast<int>(uraw);
         int v=static_cast<int>(vraw);
         if (u==v) continue;
-        outDegree[u]++;
-        if (!inDegree[v]) inDegree[v]=true;
-        edges.emplace_back(u,v,w);
+        auto it=minEdgeWt.find({u,v});
+        if (it==minEdgeWt.end()) {
+            minEdgeWt[{u,v}]=w;
+        }
+        else if (it->second>w){
+            it->second=w;
+        }
+    }
+    vector<bool>inDegree(n,false);
+    vector<int>outDegree(n,0);
+    vector<tuple<int, int, uint32_t>>edges;
+    edges.reserve(minEdgeWt.size());
+    for (auto &edge:minEdgeWt){
+        outDegree[edge.first.first]++;
+        if (!inDegree[edge.first.second]) inDegree[edge.first.second]=true;
+        edges.emplace_back(edge.first.first,edge.first.second,edge.second);
     }
     m=edges.size();
     vector<int>offset(n+1,0);
