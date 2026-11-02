@@ -15,7 +15,7 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
         long long currWt=state.first;
         if (currWt>bestDist[u]) continue;
         if (u==target) return currWt;
-        for (int j=offset[u];j<offset[u+1];j++){
+        for (int j=offset[u];j<offset[u+1];++j){
             int neigh=edgesNeigh[j];
             uint32_t wt=edgesWt[j];     
             long long nextWt=currWt+wt;
@@ -30,44 +30,41 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
     }
     return -1;
 }
-
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
     ifstream graph("/data/graph.txt");
     ifstream queries("/data/queries.txt");
     ofstream output("/out/distances.txt");
-    if (!graph.is_open() || !queries.is_open() || !output.is_open()){
-        cerr<<"File opening failed!\n";
-        return 1;
-    }
-    int n;
-    int m;
+    int n; int m;
     graph>>n>>m;
     graph.ignore();
     vector<bool>inDegree(n,false);
     vector<int>outDegree(n,0);
-    for (int i=0;i<m;i++){
+    vector<tuple<int, int, uint32_t>>edges;
+    edges.reserve(m);
+    for (int i=0;i<m;++i){
         int u; int v; uint32_t w;
         graph>>u>>v>>w;
+        if (u==v) continue;
         outDegree[u]++;
         if (!inDegree[v]) inDegree[v]=true;
+        edges.emplace_back(u,v,w);
     }
+    m=edges.size();
     vector<int>offset(n+1,0);
-    for (int i=1;i<=n;i++) offset[i]=offset[i-1]+outDegree[i-1];
+    for (int i=1;i<=n;++i) offset[i]=offset[i-1]+outDegree[i-1];
     vector<int>edgesNeigh(m);
     vector<uint32_t>edgesWt(m);
     vector<int>cursor=offset;
-    graph.clear();
-    graph.seekg(0);
-    graph>>n>>m;
-    for (int i=0;i<m;i++){
-        int u, v;uint32_t w;
-        graph>>u>>v>>w;
-        edgesNeigh[cursor[u]]=v;
-        edgesWt[cursor[u]]=w;
+    for (int i=0;i<m;++i){
+        int u=get<0>(edges[i]);
+        edgesNeigh[cursor[u]]=get<1>(edges[i]);
+        edgesWt[cursor[u]]=get<2>(edges[i]);
         cursor[u]++;
     }
+    vector<tuple<int, int, uint32_t>>().swap(edges);
+    vector<int>().swap(cursor);
     vector<pair<int, int>>graphQueries(2000);
     int u; int v; int cnt=0;
     while (queries>>u>>v){
@@ -80,7 +77,7 @@ int main() {
     atomic<int> nextQuery{0};
     auto worker=[&](){
         vector<long long>bestDist(n,LLONG_MAX);   
-        vector<uint16_t> seenBy(n, -1); 
+        vector<uint16_t> seenBy(n, UINT16_MAX); 
         while(true){
             int i=nextQuery.fetch_add(1, memory_order_relaxed);
             if (i>=q) break;
@@ -92,21 +89,13 @@ int main() {
                 distances[i]=-1;
                 continue;
             }
-            
             distances[i]=shortestPath(graphQueries[i], offset, edgesNeigh, edgesWt, bestDist, seenBy, i);
         }
     };
     vector<thread> workers;
-    int threadCount=12;
-    workers.reserve(threadCount);
-
-    for (int i=0;i<threadCount;++i){
-        workers.emplace_back(worker);
-    }
-    for (auto& t: workers){
-        t.join();
-    }
-    // 3. Write output
+    int threadCount=4;
+    for (int i=0;i<threadCount;++i) workers.emplace_back(worker);
+    for (auto& t: workers) t.join();
     for (int i=0;i<q;++i) output<<distances[i]<<"\n";
     return 0;
 }
