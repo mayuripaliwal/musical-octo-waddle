@@ -1,12 +1,11 @@
 #include <bits/stdc++.h>
 #include <thread>
 using namespace std;
-long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<int>& edgesNeigh, const vector<uint32_t>& edgesWt,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId){
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<int>& edgesNeigh, const vector<uint32_t>& edgesWt,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId, priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>& pq){
     int source=query.first;
     int target=query.second;
     seenBy[source]=queryId;
     bestDist[source]=0;
-    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
     pq.emplace(0, source);
     while(!pq.empty()){
         auto state=pq.top();
@@ -78,6 +77,7 @@ int main() {
     auto worker=[&](){
         vector<long long>bestDist(n,LLONG_MAX);   
         vector<uint16_t> seenBy(n, UINT16_MAX); 
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
         while(true){
             int i=nextQuery.fetch_add(1, memory_order_relaxed);
             if (i>=q) break;
@@ -89,7 +89,8 @@ int main() {
                 distances[i]=-1;
                 continue;
             }
-            distances[i]=shortestPath(graphQueries[i], offset, edgesNeigh, edgesWt, bestDist, seenBy, i);
+            pq=priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>();
+            distances[i]=shortestPath(graphQueries[i], offset, edgesNeigh, edgesWt, bestDist, seenBy, i, pq);
         }
     };
     vector<thread> workers;
