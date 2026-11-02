@@ -6,7 +6,8 @@ private:
     static constexpr size_t BUFFER_SIZE = 1<<20;
     FILE* file;
     char buffer[BUFFER_SIZE];
-    size_t pos=0; size_t len=0;
+    size_t pos=0;
+    size_t len=0;
     int readChar(){
         if(pos==len){
             len=fread(buffer, 1, BUFFER_SIZE, file);
@@ -18,6 +19,9 @@ private:
 public:
     FastInput(const char* filename){
         file=fopen(filename, "rb");
+        if (!file){
+            throw runtime_error("Failed to open input file!");
+        }
     }
     ~FastInput(){
         if (file) fclose(file);
@@ -78,7 +82,9 @@ int main() {
     }
     int n=static_cast<int>(nraw);
     int m=static_cast<int>(mraw);
-    map<pair<int, int>, int>minEdgeWt;
+    vector<int>outDegree(n,0);
+    vector<tuple<int, int, uint32_t>>edges;
+    edges.reserve(m);
     for (int i=0;i<m;++i){
         uint32_t uraw; uint32_t vraw; uint32_t w;
         if (!graph.readUInt(uraw) || !graph.readUInt(vraw) || !graph.readUInt(w)){
@@ -87,22 +93,8 @@ int main() {
         int u=static_cast<int>(uraw);
         int v=static_cast<int>(vraw);
         if (u==v) continue;
-        auto it=minEdgeWt.find({u,v});
-        if (it==minEdgeWt.end()) {
-            minEdgeWt[{u,v}]=w;
-        }
-        else if (it->second>w){
-            it->second=w;
-        }
-    }
-    vector<bool>inDegree(n,false);
-    vector<int>outDegree(n,0);
-    vector<tuple<int, int, uint32_t>>edges;
-    edges.reserve(minEdgeWt.size());
-    for (auto &edge:minEdgeWt){
-        outDegree[edge.first.first]++;
-        if (!inDegree[edge.first.second]) inDegree[edge.first.second]=true;
-        edges.emplace_back(edge.first.first,edge.first.second,edge.second);
+        outDegree[u]++;
+        edges.emplace_back(u,v,w);
     }
     m=edges.size();
     vector<int>offset(n+1,0);
@@ -141,7 +133,7 @@ int main() {
                 distances[i]=0;
                 continue;
             }
-            if (outDegree[graphQueries[i].first]==0 || inDegree[graphQueries[i].second]==false){
+            if (outDegree[graphQueries[i].first]==0){
                 distances[i]=-1;
                 continue;
             }
