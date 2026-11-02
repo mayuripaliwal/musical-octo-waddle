@@ -3,7 +3,7 @@
 using namespace std;
 class FastInput{
 private:
-    static constexpr size_t BUFFER_SIZE = 1<<21;
+    static constexpr size_t BUFFER_SIZE = 1<<20;
 
     FILE* file;
     char buffer[BUFFER_SIZE];
@@ -80,7 +80,6 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
     return -1;
 }
 int main() {
-    auto overallStart=chrono::steady_clock::now();
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
     FastInput graph("/data/graph.txt");
