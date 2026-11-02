@@ -1,11 +1,61 @@
 #include <bits/stdc++.h>
 #include <thread>
 using namespace std;
-long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<int>& edgesNeigh, const vector<uint32_t>& edgesWt,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId, priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>& pq){
+class FastInput{
+private:
+    static constexpr size_t BUFFER_SIZE = 1<<20;
+
+    FILE* file;
+    char buffer[BUFFER_SIZE];
+
+    size_t pos=0;
+    size_t len=0;
+
+    int readChar(){
+        if(pos==len){
+            len=fread(buffer, 1, BUFFER_SIZE, file);
+            pos=0;
+
+            if (len==0) return EOF;
+        }
+
+        return static_cast<unsigned char> (buffer[pos++]);
+    }
+public:
+    FastInput(const char* filename){
+        file=fopen(filename, "rb");
+        if (!file){
+            throw runtime_error("Failed to open input file!");
+        }
+    }
+
+    ~FastInput(){
+        if (file) fclose(file);
+    }
+
+    bool readUInt(uint32_t& x){
+        int c;
+        do{
+            c=readChar();
+            if (c==EOF) return false;
+        }
+        while(c<=' ');
+
+        x=0;
+        while(c>='0' && c<='9'){
+            x=x*10+(c-'0');
+            c=readChar();
+        }
+
+        return true;
+    }
+};
+long long shortestPath(const pair<int, int>& query,const vector<int>& offset, const vector<int>& edgesNeigh, const vector<uint32_t>& edgesWt,vector<long long>& bestDist, vector<uint16_t>& seenBy, const int& queryId){
     int source=query.first;
     int target=query.second;
     seenBy[source]=queryId;
     bestDist[source]=0;
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
     pq.emplace(0, source);
     while(!pq.empty()){
         auto state=pq.top();
@@ -30,21 +80,29 @@ long long shortestPath(const pair<int, int>& query,const vector<int>& offset, co
     return -1;
 }
 int main() {
+    auto overallStart=chrono::steady_clock::now();
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
-    ifstream graph("/data/graph.txt");
-    ifstream queries("/data/queries.txt");
+    FastInput graph("/data/graph.txt");
+    FastInput queries("/data/queries.txt");
     ofstream output("/out/distances.txt");
-    int n; int m;
-    graph>>n>>m;
-    graph.ignore();
+    uint32_t nraw; uint32_t mraw;
+    if (!graph.readUInt(nraw) || !graph.readUInt(mraw)){
+        return 1;
+    }
+    int n=static_cast<int>(nraw);
+    int m=static_cast<int>(mraw);
     vector<bool>inDegree(n,false);
     vector<int>outDegree(n,0);
     vector<tuple<int, int, uint32_t>>edges;
     edges.reserve(m);
     for (int i=0;i<m;++i){
-        int u; int v; uint32_t w;
-        graph>>u>>v>>w;
+        uint32_t uraw; uint32_t vraw; uint32_t w;
+        if (!graph.readUInt(uraw) || !graph.readUInt(vraw) || !graph.readUInt(w)){
+            return 1;
+        }
+        int u=static_cast<int>(uraw);
+        int v=static_cast<int>(vraw);
         if (u==v) continue;
         outDegree[u]++;
         if (!inDegree[v]) inDegree[v]=true;
@@ -66,18 +124,20 @@ int main() {
     vector<int>().swap(cursor);
     vector<pair<int, int>>graphQueries(2000);
     int u; int v; int cnt=0;
-    while (queries>>u>>v){
+    uint32_t uraw, vraw;
+    while (queries.readUInt(uraw)){
+        if (!queries.readUInt(vraw)) return -1;
+        int u=static_cast<int>(uraw);
+        int v=static_cast<int>(vraw);
         graphQueries[cnt]={u, v};
         cnt++;
     }
-    queries.close();
     int q=graphQueries.size();
     vector<long long>distances(q);
     atomic<int> nextQuery{0};
     auto worker=[&](){
         vector<long long>bestDist(n,LLONG_MAX);   
         vector<uint16_t> seenBy(n, UINT16_MAX); 
-        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>pq;
         while(true){
             int i=nextQuery.fetch_add(1, memory_order_relaxed);
             if (i>=q) break;
@@ -89,8 +149,7 @@ int main() {
                 distances[i]=-1;
                 continue;
             }
-            pq=priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>>();
-            distances[i]=shortestPath(graphQueries[i], offset, edgesNeigh, edgesWt, bestDist, seenBy, i, pq);
+            distances[i]=shortestPath(graphQueries[i], offset, edgesNeigh, edgesWt, bestDist, seenBy, i);
         }
     };
     vector<thread> workers;
